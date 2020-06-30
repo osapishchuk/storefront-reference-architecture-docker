@@ -1,7 +1,7 @@
 # Storefront Reference Architecture deployment Dockerfile
 
 # source of image
-FROM node:12
+FROM node:11
 
 # install packages and update
 RUN apt-get update \
