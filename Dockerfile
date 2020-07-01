@@ -8,8 +8,7 @@ RUN apt-get update \
 && apt-get upgrade -y \
 && apt-get install -y rsync zip
 
-# fetch our deploy script and make it executable
-# todo add deploy script and data to execute
+# TODO add bash script with all the steps from "Progress" section in readme
 
 # this command will confirm node was installed correctly, and fail out if the command fails
 CMD [ "node" ]
