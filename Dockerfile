@@ -1,7 +1,7 @@
 # Storefront Reference Architecture deployment Dockerfile
 
 # Source of image
-FROM node:11
+FROM node:12
 LABEL maintainer="Oleg Sapishchuk"
 LABEL license="MIT"
 
@@ -19,6 +19,7 @@ ARG SFCCPWD
 ARG SFCCCODEVERSION="code"
 ARG SFCCAPIKEY
 ARG SFCCAPISECRET
+ARG USNO="us01"
 
 #Build Salesforce Commerce Cloud working folder
 RUN mkdir home/sfcc
@@ -34,11 +35,11 @@ RUN git clone https://"${GITHUBLOGIN}":"${GITHUBTOKEN}"@github.com/SalesforceCom
 && npm run compile:scss \
 && npm run compile:fonts \
 && echo "{" \
-        "\"hostname\":\"${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com\"," \
+        "\"hostname\":\"${SANDBOXNAME}.sandbox.${USNO}.dx.commercecloud.salesforce.com\"," \
         "\"username\":\"${SFCCLOGIN}\"," \
         "\"password\":\"${SFCCPWD}\"," \
         "\"code-version\":\"${SFCCCODEVERSION}\"" \
-        "}" > dw.json \ 
+        "}" > dw.json \
 && mkdir -p tmp/code \
 && cp -R cartridges/* tmp/code \
 && cd tmp \
@@ -55,21 +56,21 @@ RUN git clone https://"${GITHUBLOGIN}":"${GITHUBTOKEN}"@github.com/SalesforceCom
 
 
 # Deploy code to instance
-RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" "${SFCCLOGIN}" "${SFCCPWD}" \
+RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" \
 && cd storefront-reference-architecture \
-&& sfcc-ci code:deploy tmp/code.zip -i "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com" \
-&& sfcc-ci code:activate code -i "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com"
+&& sfcc-ci code:deploy tmp/code.zip -i "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com" \
+&& sfcc-ci code:activate code -i "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com"
 
 # Deploy data to instance
-RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" "${SFCCLOGIN}" "${SFCCPWD}" \
+RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" \
 && cd storefrontdata \
-&& sfcc-ci instance:upload demo_data_sfra.zip -i "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com" \
-&& sfcc-ci instance:import demo_data_sfra.zip -i "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com" -s
+&& sfcc-ci instance:upload demo_data_sfra.zip -i "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com" \
+&& sfcc-ci instance:import demo_data_sfra.zip -i "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com" -s
 
 # Reindex site and rebuild urls
-RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" "${SFCCLOGIN}" "${SFCCPWD}" \
-&& sfcc-ci job:run Reindex --instance "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com" --sync --json \
-&& sfcc-ci job:run RebuildURLs --instance "${SANDBOXNAME}.sandbox.us01.dx.commercecloud.salesforce.com" --sync --json
+RUN sfcc-ci client:auth "${SFCCAPIKEY}" "${SFCCAPISECRET}" \
+&& sfcc-ci job:run Reindex --instance "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com" --sync --json \
+&& sfcc-ci job:run RebuildURLs --instance "${SANDBOXNAME}.sandbox.us02.dx.commercecloud.salesforce.com" --sync --json
 
 # this command will confirm node was installed correctly, and fail out if the command fails
 CMD [ "node" ]
